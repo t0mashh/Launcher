@@ -1,49 +1,34 @@
 plugins {
-    id("com.gradleup.shadow")
+    id("java-library")
+    kotlin("jvm") version "1.9.22"
+    id("org.jetbrains.compose") version "1.6.0"
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
+group = "pro.gravit.launcher.runtime"
+version = project.version
 
-repositories {
-    mavenCentral()
-    maven {
-        url = uri("https://maven.gravitlauncher.com/")
-    }
-}
-
-val optional by configurations.creating {
-    isCanBeConsumed = false; isCanBeResolved = true;
-}
-
-configurations {
-    compileOnly.get().extendsFrom(optional)
-}
-
-tasks.shadowJar {
-    archiveClassifier.set("all")
-    exclude("module-info.class")
-    manifest {
-        attributes(
-            "Main-Class" to "pro.gravit.launcher.runtime.LauncherEngineWrapper"
-        )
+sourceSets {
+    main {
+        java.srcDirs("src/main/java")
+        java.srcDirs("src/main/kotlin") 
+        resources.srcDirs("src/main/resources")
     }
 }
 
 dependencies {
-    api(project(":components:launcher-client"))
-    api(project(":components:launcher-start"))
-    optional(libs.slf4j.simple)
-    optional(libs.oshi)
+    api(project(":components:launcher-api"))
+    api(project(":components:launcher-core"))
+    
+    implementation(compose.desktop.currentOs)
+    implementation(compose.material)
+    implementation(compose.material3)
+    
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.7.3")
+
+    compileOnly("org.projectlombok:lombok:1.18.30")
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
 }
 
-val copyLauncherLibs by tasks.registering(Copy::class) {
-    from(optional.resolve())
-    into(layout.buildDirectory.dir("launcher-libraries"))
-}
-
-tasks.assemble {
-    dependsOn(tasks.shadowJar, copyLauncherLibs)
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
 }
